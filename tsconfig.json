@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    /* Configurações básicas */
+    "target": "es5",                          /* Especifica a versão ECMAScript do código de saída. */
+    "module": "commonjs",                     /* Especifica o sistema de módulo: 'none', 'commonjs', 'amd', 'system', 'umd', 'es6', 'es2015', 'es2020', or 'ESNext'. */
+    "strict": true,                           /* Habilita todas as opções estritas de verificação de tipo. */
+    "esModuleInterop": true,                  /* Habilita a geração de código adicional para suporte de imports de módulos CommonJS/AMD. */
+    "skipLibCheck": true,                     /* Ignora as declarações de tipo ao fazer a verificação de tipo. */
+    "forceConsistentCasingInFileNames": true, /* Desabilita a verificação de consistência de maiúsculas/minúsculas ao importar módulos. */
+
+    /* Configurações de diretórios e arquivos */
+    "outDir": "./dist",                       /* Direciona o diretório de saída para os arquivos compilados. */
+    "rootDir": "./src",                       /* Direciona o diretório raiz dos arquivos de entrada. */
+
+    /* Configurações de módulos e resolução */
+    "moduleResolution": "node",               /* Estratégia de resolução de módulos: 'node' (Node.js) ou 'classic' (TypeScript < 1.6). */
+    "baseUrl": "./",                          /* Caminho base para a resolução de módulos absolutos. */
+    "paths": {                                /* Lista de mapeamentos de importação de módulos a serem usados ao compilar. */
+      "*": ["node_modules/*", "src/types/*"]
+    },
+
+    /* Configurações experimentais */
+    "experimentalDecorators": true,           /* Habilita suporte experimental para decoradores ES7. */
+    "emitDecoratorMetadata": true             /* Habilita emissão de metadados adicionais para decoradores e funções 'get'/'set'. */
+  },
+  "include": [
+    "src/**/*.ts"                             /* Inclui todos os arquivos TypeScript dentro da pasta 'src' e seus subdiretórios. */
+  ],
+  "exclude": [
+    "node_modules"                            /* Exclui a pasta 'node_modules'. */
+  ]
+}

@@ -1,0 +1,30 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diretório onde os pacotes npm são instalados
+node_modules/
+
+# Diretório de saída do TypeScript
+dist/
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS arquivos gerados
+*.DS_Store
+*.thumbnail
+Thumbs.db
+
+# Outros arquivos comuns a serem ignorados
+*.bak
+*.swp
+*.lock
