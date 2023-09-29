@@ -1,3 +1,3 @@
 # toywhats
 
-Fake application to implement 2FA auth with message encryption
+Fake application to implement 2FA with message encryption
