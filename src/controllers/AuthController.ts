@@ -1,6 +1,6 @@
-import { genSaltSync, hashSync } from "bcryptjs";
+import { genSaltSync, hashSync, compareSync } from "bcryptjs";
 
-class AuthController {
+export class AuthController {
     saltRounds = 10;
 
     generateSalt(): string {
@@ -18,6 +18,11 @@ class AuthController {
             salt
         }
     }
+
+    validatePassword(password: string, hashedPass: string): boolean {
+        return compareSync(password, hashedPass);
+    }
 }
 
-export default new AuthController();
+const authController = new AuthController();
+export default authController;
