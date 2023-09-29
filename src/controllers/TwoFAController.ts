@@ -9,7 +9,7 @@ export class TwoFAController extends AuthController {
     // data == user.name
     generate2FASecret(data: string): speakeasy.GeneratedSecret {
         return speakeasy.generateSecret({
-            name: `secretToyWhats:${data}`
+            name: `Toy Whats secre for ${data}`
         });
     }
 

@@ -6,4 +6,5 @@ export default interface IUser {
     phone: string;
     salt: string;
     secret?: ISecret;
+    messages?: any[];
 }

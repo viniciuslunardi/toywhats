@@ -1,10 +1,11 @@
 import _ from "lodash";
-import { Router } from "express";
+import {Router} from "express";
 
 import User from "../entities/User";
 import IUser from "../entities/intefaces/IUser";
 import authController from "./AuthController";
 import twoFAController from "./TwoFAController";
+import messageController from "./MessageController";
 
 const usersDb: User[] = [];
 
@@ -16,11 +17,20 @@ export default class UserController {
     }
 
     initRoutes(): void {
+        //rotas abertas
         this.router.post('/register', this.registerRoute.bind(this));
         this.router.post('/login', this.loginRoute.bind(this));
+
+        //rotas autenticadas
+        //no mundo real, estas rotas precisariam verificar se um usuário está autenticado antes de executar a ação
+        //utilizando um middleware de autenticação por exemplo
         this.router.get('', this.listRoute.bind(this));
+        this.router.post('/sendMessage', this.sendMessageRoute.bind(this));
+        this.router.get('/read-messages/:name', this.readMessagesRoute.bind(this));
+        this.router.get('/read-decrypted-messages/:name', this.readDecryptedMessagesRoute.bind(this));
     }
 
+    //routes
     async listRoute(req: Request, res: Response): Promise<Response> {
         try {
             const users = UserController.list();
@@ -50,8 +60,39 @@ export default class UserController {
         }
     }
 
-    // Cria um usuário e seu salt e o armazena em memória
-    static async create(data: Partial<IUser>): Promise<Partial<IUser>> {
+    async sendMessageRoute(req: Request, res: Response): Promise<Response> {
+        // num nundo real, buscariamos a sessão do usuário para setá-lo como remetente
+        const { message, recieverName } = req.body;
+        try {
+            await this.sendMessage(message, recieverName);
+            return res.status(200).json({ message: "Mensagem enviada com sucesso" });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
+    async readMessagesRoute(req: Request, res: Response): Promise<Response> {
+        const { name } = req.params;
+        try {
+            const messages = await this.readMessages(name);
+            return res.status(200).json({ messages });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
+    async readDecryptedMessagesRoute(req: Request, res: Response): Promise<Response> {
+        const { name } = req.params;
+        try {
+            const decryptedMessages = await this.readDecryptedMessages(name);
+            return res.status(200).json({ decryptedMessages });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
+    // methods
+    static async create(data: Partial<IUser>): Promise<Partial<IUser> | undefined> {
         const { name, password, phone } = data;
 
         if (name && password && phone) {
@@ -94,13 +135,42 @@ export default class UserController {
     }
 
 
-    static get(name: string): User {
-        return usersDb.filter(user => user.name === name).shift();
+    static get(name: string): User | undefined {
+        return usersDb.filter((user: User) => user.name === name).shift();
     }
 
     static set(user: User): void {
          const index = _.findIndex(usersDb, { name: user.name });
          usersDb[index] = user;
+    }
+
+    async sendMessage(message: string, recieverName: string): Promise<void> {
+        const reciever = UserController.get(recieverName);
+        if (!reciever) {
+            throw new Error("Usuário não existente");
+        }
+
+        const encryptedMessageData = messageController.encryptMessage(message, reciever.salt);
+        reciever.messages.push(encryptedMessageData);
+    }
+
+    async readMessages(name: string): Promise<string[]> {
+        const user = UserController.get(name);
+        if (!user) {
+            throw new Error("Usuário não existente");
+        }
+
+        return user.messages.map(m => m.encryptedData)
+    }
+
+    async readDecryptedMessages(name: string): Promise<any[]> {
+        const user = UserController.get(name);
+        if (!user) {
+            throw new Error("Usuário não existente");
+        }
+
+        // decifrando cada mensagem e retornando
+        return user.messages.map(message => messageController.decryptMessage(message, user.salt));
     }
 
     static async authenticateUser(name: string, password: string, token: string): Promise<boolean> {
