@@ -1,20 +1,23 @@
-// Anexando ao objeto global
+import express from "express";
 
 import UserController from "./controllers/UserController";
+
 
 (() => {
     try {
         console.log(`Iniciando aplicação...`);
-        new UserController();
 
-        const newUser = UserController.create({
-            name: "João",
-            password: "123456",
-            phone: "123456789"
+        const app = express();
+        const router = express.Router();
+
+        new UserController(router);
+
+        app.use(express.json());
+        app.use('/users', router);
+
+        app.listen(3000, () => {
+            console.log(`Aplicação iniciada na porta 3000`);
         });
-
-        console.log(`Usuário criado: ${newUser.name}`);
-
     } catch (error) {
         console.log(`Erro na aplicação:`);
         console.error(error);

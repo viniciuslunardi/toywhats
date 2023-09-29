@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Router } from "express";
 
 import User from "../entities/User";
 import IUser from "../entities/intefaces/IUser";
@@ -8,6 +9,47 @@ import twoFAController from "./TwoFAController";
 const usersDb: User[] = [];
 
 export default class UserController {
+    router: Router;
+    constructor(router: Router) {
+        this.router = router;
+        this.initRoutes();
+    }
+
+    initRoutes(): void {
+        this.router.post('/register', this.registerRoute.bind(this));
+        this.router.post('/login', this.loginRoute.bind(this));
+        this.router.get('', this.listRoute.bind(this));
+    }
+
+    async listRoute(req: Request, res: Response): Promise<Response> {
+        try {
+            const users = UserController.list();
+            return res.status(200).json({ users });
+        } catch (err) {
+            return res.status(401).json({ error: err.message });
+        }
+    }
+
+    async registerRoute(req: Request, res: Response): Promise<Response> {
+        const { name, password, phone } = req.body;
+        try {
+            await UserController.create({ name, password, phone });
+            return res.status(201).json({ message: "Usuário criado com sucesso" });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
+    async loginRoute(req: Request, res: Response): Promise<Response> {
+        const { name, password, token } = req.body;
+        try {
+            await UserController.authenticateUser(name, password, token);
+            return res.status(200).json({ message: "Usuário autenticado com sucesso" });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
     // Cria um usuário e seu salt e o armazena em memória
     static async create(data: Partial<IUser>): Promise<Partial<IUser>> {
         const { name, password, phone } = data;
@@ -85,5 +127,10 @@ export default class UserController {
         // em sum cenário real, seria interssante salvar uma chave/cookie de sessão para o usuário e em toda request verificar se ainda está válida
         // a sessão invalidaria após um tempo de inatividade, após o usuário se deslogar, ou se o usuário fizer um novo login em outro dispositivo
         return true;
+    }
+
+    //list all users
+    static list(): User[] {
+        return usersDb;
     }
 }
