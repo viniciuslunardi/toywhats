@@ -101,7 +101,7 @@ export default class UserController {
             }
 
             // auth controller retorna o hash e o salt
-            const { hashedPass, salt } = authController.hashPassword(password);
+            const { hashedPass, salt } = await authController.hashPassword(password);
 
             const user = new User(name, hashedPass, phone, salt);
             usersDb.push(user);

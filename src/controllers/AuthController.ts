@@ -1,26 +1,30 @@
-import { genSaltSync, hashSync, compareSync } from "bcryptjs";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+// transforma a função scrypt em uma função que retorna uma Promise,
+// para não travar a thread de execução uma vez que a função scrypt é síncrona e pode ser custosa
+const scryptAsync = promisify(scrypt);
 
 export class AuthController {
-    saltRounds = 10;
+    private saltLength = 16;
 
-    generateSalt(): string {
-        // Gera um salt aleatório, com o parâmetro saltRounds sendo o número de rounds (quantas interações o algoritmo de hash vai rodar)
-        return genSaltSync(this.saltRounds);
+    async generateSalt(): Promise<string> {
+        return randomBytes(this.saltLength).toString('hex');
     }
 
-    hashPassword(password: string): { hashedPass: string, salt: string } {
-        // Gera um salt aleatório
-        const salt = this.generateSalt();
-        const hashedPass = hashSync(password, salt);
-
+    async hashPassword(password: string): Promise<{ hashedPass: string, salt: string }> {
+        const salt = await this.generateSalt();
+        // hash da senha com o salt no tamanho de 64 bytes
+        const hashedPassBuffer = await scryptAsync(password, salt, 64);
         return {
-            hashedPass,
+            hashedPass: hashedPassBuffer.toString('hex'), // convertendo para hexadecimal, fica um hash com 128 caracteres
             salt
-        }
+        };
     }
 
-    validatePassword(password: string, hashedPass: string): boolean {
-        return compareSync(password, hashedPass);
+    async validatePassword(password: string, hashedPass: string, salt: string): Promise<boolean> {
+        const hashedPassBuffer = await scryptAsync(password, salt, 64);
+        return hashedPassBuffer.toString('hex') === hashedPass;
     }
 }
 

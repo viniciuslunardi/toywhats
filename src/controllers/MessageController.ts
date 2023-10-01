@@ -9,7 +9,7 @@ export class MessageController {
         const key = crypto.pbkdf2Sync(secret, salt, 1000, 32, 'sha512');
 
         // Gera um IV ou nonce e cifra a mensagem
-        const iv = crypto.randomBytes(16);
+        const iv = crypto.randomBytes(16); // usar pbkdf2Sync para gerar o IV
         const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
 
         const encrypted = Buffer.concat([cipher.update(message, 'utf8'), cipher.final()]);
@@ -24,6 +24,7 @@ export class MessageController {
     }
 
     decryptMessage(encryptedMessage: IEncryptedMessage, secret: string) {
+        // calcular o sal dnv
         // Deriva a chave usando o secret e salt da mesagem cifrada
         const key = crypto.pbkdf2Sync(secret, encryptedMessage.salt, 1000, 32, 'sha512');
         const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(encryptedMessage.iv, 'hex'));
