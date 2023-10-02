@@ -26,6 +26,10 @@ export class AuthController {
         const hashedPassBuffer = await scryptAsync(password, salt, 64);
         return hashedPassBuffer.toString('hex') === hashedPass;
     }
+
+    generateSecret(): string {
+        return randomBytes(32).toString('hex');
+    }
 }
 
 const authController = new AuthController();

@@ -1,3 +1,6 @@
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 import _ from "lodash";
 import {Router} from "express";
 
@@ -7,7 +10,8 @@ import authController from "./AuthController";
 import twoFAController from "./TwoFAController";
 import messageController from "./MessageController";
 
-const usersDb: User[] = [];
+const usersDbFile = path.join('./', 'usersDb.json');
+
 
 export default class UserController {
     router: Router;
@@ -111,11 +115,24 @@ export default class UserController {
 
             await this.activate2FA(name);
 
+            await this.saveUsersDbToFile();
             return {
                 name: user.name,
                 phone: user.phone
             };
         }
+    }
+
+    static saveUsersDbToFile() {
+        fs.writeFileSync(usersDbFile, JSON.stringify(usersDb, null, 4));
+    }
+
+    static loadUsersDbFromFile() {
+        if (fs.existsSync(usersDbFile)) {
+            const data = fs.readFileSync(usersDbFile, 'utf8');
+            return JSON.parse(data) as User[];
+        }
+        return [];
     }
 
     static async activate2FA(name: string): Promise<void> {
@@ -142,6 +159,7 @@ export default class UserController {
     static set(user: User): void {
          const index = _.findIndex(usersDb, { name: user.name });
          usersDb[index] = user;
+         UserController.saveUsersDbToFile()
     }
 
     async sendMessage(message: string, recieverName: string): Promise<void> {
@@ -150,9 +168,18 @@ export default class UserController {
             throw new Error("Usuário não existente");
         }
 
-        const encryptedMessageData = messageController.encryptMessage(message, reciever.salt);
-        reciever.messages.push(encryptedMessageData);
+        const secretForMessage = authController.generateSecret();
+        const encryptedSecret = messageController.encryptMessage(secretForMessage, reciever.salt);
+        const encryptedMessageData = messageController.encryptMessage(message, secretForMessage);
+
+        reciever.messages.push({
+            encryptedData: encryptedMessageData,
+            encryptedSecret: encryptedSecret
+        });
+
+        UserController.set(reciever);
     }
+
 
     async readMessages(name: string): Promise<string[]> {
         const user = UserController.get(name);
@@ -169,8 +196,10 @@ export default class UserController {
             throw new Error("Usuário não existente");
         }
 
-        // decifrando cada mensagem e retornando
-        return user.messages.map(message => messageController.decryptMessage(message, user.salt));
+        return user.messages.map(message => {
+            const secretForMessage = messageController.decryptMessage(message.encryptedSecret, user.salt);
+            return messageController.decryptMessage(message.encryptedData , secretForMessage);
+        });
     }
 
     static async authenticateUser(name: string, password: string, token: string): Promise<boolean> {
@@ -180,7 +209,7 @@ export default class UserController {
         }
 
         // comparando sincronamente a senha informada com a senha hashada armazenada
-        const validPassword = authController.validatePassword(password, user.password);
+        const validPassword = authController.validatePassword(password, user.password, user.salt);
 
         if (!validPassword) {
             throw new Error("Senha inválida");
@@ -204,3 +233,5 @@ export default class UserController {
         return usersDb;
     }
 }
+
+const usersDb: User[] = UserController.loadUsersDbFromFile();
