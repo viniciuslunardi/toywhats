@@ -66,9 +66,9 @@ export default class UserController {
 
     async sendMessageRoute(req: Request, res: Response): Promise<Response> {
         // num nundo real, buscariamos a sessão do usuário para setá-lo como remetente
-        const { message, recieverName } = req.body;
+        const { message, to, from } = req.body;
         try {
-            await this.sendMessage(message, recieverName);
+            await this.sendMessage(message, to, from);
             return res.status(200).json({ message: "Mensagem enviada com sucesso" });
         } catch (err) {
             return res.status(400).json({ error: err.message });
@@ -162,10 +162,13 @@ export default class UserController {
          UserController.saveUsersDbToFile()
     }
 
-    async sendMessage(message: string, recieverName: string): Promise<void> {
-        const reciever = UserController.get(recieverName);
+    async sendMessage(message: string, to: string, from: string): Promise<void> {
+        const reciever = UserController.get(to);
+        const sender = UserController.get(from);
         if (!reciever) {
-            throw new Error("Usuário não existente");
+            throw new Error("Usuário destinário não existente");
+        } else if (!sender) {
+            throw new Error("Usuário remetende não existente");
         }
 
         const secretForMessage = authController.generateSecret();
@@ -174,6 +177,8 @@ export default class UserController {
 
         reciever.messages.push({
             encryptedData: encryptedMessageData,
+            reciever: reciever.name,
+            sender: sender.name,
             encryptedSecret: encryptedSecret
         });
 
@@ -187,7 +192,7 @@ export default class UserController {
             throw new Error("Usuário não existente");
         }
 
-        return user.messages.map(m => m.encryptedData)
+        return user.messages.map(m => m.encryptedData.encryptedData)
     }
 
     async readDecryptedMessages(name: string): Promise<any[]> {
@@ -198,7 +203,12 @@ export default class UserController {
 
         return user.messages.map(message => {
             const secretForMessage = messageController.decryptMessage(message.encryptedSecret, user.salt);
-            return messageController.decryptMessage(message.encryptedData , secretForMessage);
+            const msg = messageController.decryptMessage(message.encryptedData , secretForMessage);
+            return {
+                message: msg,
+                sender: message.sender,
+                reciever: message.reciever
+            }
         });
     }
 
