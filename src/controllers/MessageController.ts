@@ -8,7 +8,7 @@ export class MessageController {
         const iv = crypto.randomBytes(16);
 
         // Derive salt do IV. Este é um exemplo simples e pode não ser ideal para todos os cenários.
-        const salt = crypto.createHash('sha256').update(iv).digest().slice(0, 16);
+        const salt = crypto.createHash('sha256').update(iv).digest().subarray(0, 16);
 
         // Deriva a chave usando o secret e o salt
         const key = crypto.pbkdf2Sync(secret, salt, 1000, 32, 'sha512');
@@ -28,7 +28,7 @@ export class MessageController {
         const iv = Buffer.from(encryptedMessage.iv, 'hex');
 
         // Derive salt do IV de forma idêntica à criptografia
-        const salt = crypto.createHash('sha256').update(iv).digest().slice(0, 16);
+        const salt = crypto.createHash('sha256').update(iv).digest().subarray(0, 16);
 
         // Deriva a chave usando o secret e o salt
         const key = crypto.pbkdf2Sync(secret, salt, 1000, 32, 'sha512');

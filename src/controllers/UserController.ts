@@ -219,7 +219,7 @@ export default class UserController {
         }
 
         // comparando sincronamente a senha informada com a senha hashada armazenada
-        const validPassword = authController.validatePassword(password, user.password, user.salt);
+        const validPassword = await authController.validatePassword(password, user.password, user.salt);
 
         if (!validPassword) {
             throw new Error("Senha inválida");
